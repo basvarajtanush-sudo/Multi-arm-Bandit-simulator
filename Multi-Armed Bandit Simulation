@@ -1,0 +1,156 @@
+import random
+
+cafe_means = [7,10,4]
+cafe_devs = [3,10,6]
+
+def generateNewHappiness(cafeteria):
+    mean = cafe_means[cafeteria -1]
+    dev = cafe_devs[cafeteria-1]
+    happiness = random.normalvariate(mean,dev)
+    return happiness
+
+#starts another function
+def explore_only():
+    #setting up a counter variable (total happiness) to keep track of happiness values
+    totalhappiness = 0
+
+    for cafeteria in range (1, 4):
+        # runs another loop inside cafeteria loop, runs 100 times for each cafeteria
+        for day in range(100):
+            #calls function from before, makes a new random happiness number each day
+            happiness = generateNewHappiness(cafeteria)
+            #shortcut for totalHappiness = totalHappiness + happiness, adds daily happiness value
+            totalhappiness += happiness
+    #after finishing all loops, the function spits out the final sum of happiness
+    return totalhappiness
+
+
+
+
+# ---------------------------------------
+# Function: exploitOnly
+# Description:
+#   This function simulates the "exploit only" strategy for 100 days.
+#   Step 1: Visit each cafeteria once to test them.
+#   Step 2: Pick the cafeteria with the highest happiness score.
+#   Step 3: Visit only that cafeteria for the rest of the days.
+#   Returns:
+#       The total happiness accumulated over the 100 days.
+# ---------------------------------------
+def exploit_only(t):
+    # Use a random seed for reproducibility (you can comment this out if needed)
+    random.seed(42)
+
+    # Start total happiness at 0
+    total_happiness = 0.0
+
+    # --- Step 1: Exploration phase (first 3 days) ---
+    first_three = []
+    for i in range(3):
+        # Generate random happiness score for each cafeteria
+        sample = random.normalvariate(cafe_means[i], cafe_means[i])
+        first_three.append(sample)
+        total_happiness += sample
+
+    # --- Step 2: Find cafeteria with highest initial happiness ---
+    best_index = first_three.index(max(first_three))  # 0, 1, or 2
+
+    # --- Step 3: Exploitation phase (remaining 97 days) ---
+    for _ in range(t - 3):
+        sample = random.normalvariate(cafe_means[best_index], cafe_means[best_index])
+        total_happiness += sample
+
+    # Return only the total happiness (as required)
+    return total_happiness
+
+
+
+
+
+def eGreedy(cafe_means, cafe_dev, visits, e=10):
+#Simulate the E-Greedy strategy:
+#With probability e% explore randomly, otherwise exploit the best cafe
+    total = 0
+    best_idx = cafe_means.index(max(cafe_means))
+    for _ in range(visits):
+        if random.random() < e / 100:  # Explore
+            idx = random.randint(0, len(cafe_means) - 1)
+        else:  # Exploit
+            idx = best_idx
+        total += random.gauss(cafe_means[idx], cafe_dev[idx])
+    return total
+
+
+
+
+#runs through all the functions and simulates the expected and actual values
+#by running the functions and calculating expected happiness and regret values
+def simulation(t,e=10):
+    #optimum happiness value
+    optimum_happiness = 300 * max(cafe_means)
+    #values that will collect the total happiness values
+    sim_explore_happiness = 0
+    sim_exploit_happiness = 0
+    sim_eGreedy_happiness = 0
+
+
+
+
+    for i in range(t):#loops through all the functions to add the happiness values to the variables
+        sim_explore_happiness += explore_only()
+        sim_exploit_happiness += exploit_only(1)
+        sim_eGreedy_happiness += eGreedy(cafe_means,cafe_devs,1)
+
+    #expected happiness values for each function
+    expected_explore = 300 * max(cafe_means)
+    expect_exploit = 100 * sum(cafe_means)
+    expect_eGreedy = (e) * sum(cafe_means) + 3*(100 -e) * max(cafe_means)
+
+    #finds all the average values of happiness by using the total happiness and dividing it
+    #by the number of days
+    av_explore_happiness = sim_explore_happiness / t
+    av_exploit_happiness = sim_exploit_happiness / t
+    av_eGreedy_happiness = sim_eGreedy_happiness / t
+
+
+    #finds all the regret by using optimum happiness minus av happiness
+    explore_regret = optimum_happiness - av_explore_happiness
+    exploit_regret = optimum_happiness - av_exploit_happiness
+    eGreedy_regret = optimum_happiness - av_eGreedy_happiness
+
+
+    #finds the expected regret by using the optimum happiness minus the expected regret
+    expect_regret_explore = optimum_happiness - expected_explore
+    expect_regret_exploit = optimum_happiness - expect_exploit
+    expect_regret_Egreedy = optimum_happiness - expect_eGreedy
+
+
+    #prints optimum happiness
+    print("Optimum Happiness:",f"{optimum_happiness:.2f}", "\n")
+    #prints explore only's details
+    print("Explore Only:")
+    print("Expected Happiness:", f"{expected_explore:.2f}")
+    print("Expected Regret:", f"{expect_regret_explore:.2f}")
+    print("Simulated Happiness:", f"{sim_explore_happiness:.2f}")
+    print("Simulated Regret:", f"{explore_regret:.2f}","\n")
+
+
+    #prints all the exploit only details
+    print("Exploit Only:", "\n")
+    print("Expected Happiness:", f"{expect_exploit:.2f}")
+    print("Expected Regret:", f"{expect_regret_exploit:.2f}")
+    print("Simulated Happiness:", f"{sim_exploit_happiness:.2f}")
+    print("Simulated Regret:", f"{exploit_regret:.2f}","\n")
+
+    #prints all the eGreedy's details
+    print("eGreedy:","\n")
+    print("Expected Happiness:", f"{expect_eGreedy:.2f}")
+    print("Expected Regret:", f"{expect_regret_Egreedy:.2f}")
+    print("Simulated Happiness:", f"{sim_eGreedy_happiness:.2f}")
+    print("Simulated Regret:", f"{eGreedy_regret:.2f}")
+
+
+
+
+
+print(simulation(300))
